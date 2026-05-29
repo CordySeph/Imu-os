@@ -1,10 +1,13 @@
+# .github/workflows/build-iso.yml
 name: Build and Publish Gaming ISO
 
 on:
   push:
     branches:
       - main
-  workflow_dispatch: # เปิดให้เรากดสั่ง Build มือเองได้จากหน้าเว็บ GitHub
+  workflow_dispatch:
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: 'true'
 
 jobs:
   build-iso:
