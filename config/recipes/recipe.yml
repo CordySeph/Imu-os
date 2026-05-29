@@ -1,31 +1,31 @@
-# recipes/recipe.yml
-name: my-gaming-os
-description: My First Custom Open-Source Gaming OS
+# yaml-language-server: $schema=https://blue-build.org/schema.json
+name: imu-os
+description: Arch-rival of the meta, the ultimate gaming OS for PC.
 
-# ใช้ฐาน Fedora Silverblue รุ่นล่าสุด (เสถียร ทันสมัย เหมาะกับ Gaming)
+# ใช้ฐานข้อมูลจาก Fedora Silverblue รุ่นล่าสุด
 base-image: ghcr.io/fedora-atomic/silverblue:40
-
 image-version: latest
 
-# รวมเอาคลัง RPM Fusion สำหรับ Driver NVIDIA และ Codec ต่างๆ
 modules:
+  # 1. เปิดใช้งานคลังแสง RPM Fusion เพื่อดึง Driver และ Codec ต่างๆ
   - type: rpm-automation
     repositories:
       - https://mirrors.rpmfusion.org/free/fedora/rpmfusion-free-release-%(fedora)s.noarch.rpm
       - https://mirrors.rpmfusion.org/nonfree/fedora/rpmfusion-nonfree-release-%(fedora)s.noarch.rpm
 
+  # 2. จัดการเรื่อง Kernel พื้นฐานในเฟสแรก
   - type: blinky-core
-    kernel: generic # ในเฟสแรกใช้ Kernel มาตรฐานก่อน (เฟสถัดไปค่อยสลับเป็น TKG หรือ Zen)
+    kernel: generic
 
-  # ระบบแพ็กเกจหลักที่จะให้ติดมากับ ISO ตั้งแต่แรก
-  - type: apt-packages
+  # 3. ติดตั้งคลังแอปพลิเคชันและเครื่องมือฝั่ง Gaming (ใช้ rpm-ostree สำหรับฐาน Fedora)
+  - type: rpm-ostree
     install:
       - git
       - curl
-      - mangohud       # ตัวโชว์ FPS และความร้อน CPU/GPU
-      - gamemode       # ตัวรีดประสิทธิภาพจาก Feral Interactive
-      - steam          # ลันเชอร์เกมหลัก
+      - mangohud       # ระบบ HUD เปิดโชว์ FPS/อุณหภูมิ/การทำงานขนาบข้างในเกม
+      - gamemode       # ตัวสลับลำดับการทำงานของ CPU/GPU มุ่งเน้นไปที่ตัวเกม
+      - openrgb        # เครื่องมือควบคุมไฟ RGB สำหรับเคสและอุปกรณ์พีซี
 
-  # ตั้งค่าเริ่มต้นให้ระบบ (เช่น เปิดใช้งาน Wayland, ตั้งธีม)
+  # 4. กำหนด Desktop Environment เริ่มต้นให้ผู้ใช้งาน
   - type: default-settings
-    desktop: kde       # สลับเป็น KDE Plasma 6 ที่รองรับ HDR/VRR ได้ดีที่สุด
+    desktop: kde       # เลือก KDE Plasma รองรับฟีเจอร์ Wayland, HDR, และ VRR ได้ดีที่สุด

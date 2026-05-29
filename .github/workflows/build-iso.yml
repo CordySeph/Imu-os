@@ -1,11 +1,13 @@
-# .github/workflows/build-iso.yml
 name: Build and Publish Gaming ISO
 
 on:
   push:
     branches:
       - main
-  workflow_dispatch:
+      - master # ใส่เผื่อไว้สำหรับเคสที่ระบบใช้ชื่อกิ่งเดิมครับ
+  workflow_dispatch: # เปิดให้สามารถกดสั่ง Build มือเองได้จากหน้าเว็บ GitHub
+
+# บังคับให้ GitHub Runner ใช้ Node.js 24 ทั้ง Workflow เพื่อลบ Warning กวนใจ
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: 'true'
 
@@ -22,16 +24,23 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
-      # ✨ เพิ่มสเตปนี้เข้าไปเพื่อล็อกอินเข้า GHCR อัตโนมัติ
-      - name: Log in to GitHub Container Registry
-        uses: docker/login-action@v3
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      # ส่วนของ BlueBuild เดิม (ปรับปรุงเอา push: true ออกในเฟสแรก หากยังไม่ได้ตั้งค่าคีย์สำหรับเซ็นความปลอดภัย)
+      # สเตปเรียกใช้ BlueBuild พร้อมส่งสิทธิ์ Token เข้าไปล็อกอินใน Container โดยตรง
       - name: Build ISO using BlueBuild
         uses: blue-build/github-action@v1.1
         with:
           recipe: 'recipes/recipe.yml'
+          registry: ghcr.io
+          registry_namespace: ${{ github.repository_owner }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      # นำไฟล์ ISO ที่ประกอบเสร็จแล้วไปปล่อยในหน้า GitHub Releases
+      - name: Upload ISO to GitHub Releases
+        uses: softprops/action-gh-release@v2
+        if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
+        with:
+          files: |
+            build/*.iso
+            build/*.iso.sha256
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
