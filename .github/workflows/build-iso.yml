@@ -22,20 +22,16 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
-      # เรียกใช้ตัวช่วย Build ของ BlueBuild
+      # ✨ เพิ่มสเตปนี้เข้าไปเพื่อล็อกอินเข้า GHCR อัตโนมัติ
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      # ส่วนของ BlueBuild เดิม (ปรับปรุงเอา push: true ออกในเฟสแรก หากยังไม่ได้ตั้งค่าคีย์สำหรับเซ็นความปลอดภัย)
       - name: Build ISO using BlueBuild
         uses: blue-build/github-action@v1.1
         with:
           recipe: 'recipes/recipe.yml'
-          cosign_private_key: ${{ secrets.SIGNING_SECRET }} # สำหรับล็อกอินยืนยันความปลอดภัยไฟล์ OS
-
-      # นำไฟล์ ISO ที่ได้ไปฝากไว้ในระบบ Release ของ GitHub ให้คนมากดโหลด
-      - name: Upload ISO to GitHub Releases
-        uses: softprops/action-gh-release@v2
-        if: github.ref == 'refs/heads/main'
-        with:
-          files: |
-            build/*.iso
-            build/*.iso.sha256
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
