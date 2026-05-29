@@ -1,0 +1,31 @@
+# recipes/recipe.yml
+name: my-gaming-os
+description: My First Custom Open-Source Gaming OS
+
+# ใช้ฐาน Fedora Silverblue รุ่นล่าสุด (เสถียร ทันสมัย เหมาะกับ Gaming)
+base-image: ghcr.io/fedora-atomic/silverblue:40
+
+image-version: latest
+
+# รวมเอาคลัง RPM Fusion สำหรับ Driver NVIDIA และ Codec ต่างๆ
+modules:
+  - type: rpm-automation
+    repositories:
+      - https://mirrors.rpmfusion.org/free/fedora/rpmfusion-free-release-%(fedora)s.noarch.rpm
+      - https://mirrors.rpmfusion.org/nonfree/fedora/rpmfusion-nonfree-release-%(fedora)s.noarch.rpm
+
+  - type: blinky-core
+    kernel: generic # ในเฟสแรกใช้ Kernel มาตรฐานก่อน (เฟสถัดไปค่อยสลับเป็น TKG หรือ Zen)
+
+  # ระบบแพ็กเกจหลักที่จะให้ติดมากับ ISO ตั้งแต่แรก
+  - type: apt-packages
+    install:
+      - git
+      - curl
+      - mangohud       # ตัวโชว์ FPS และความร้อน CPU/GPU
+      - gamemode       # ตัวรีดประสิทธิภาพจาก Feral Interactive
+      - steam          # ลันเชอร์เกมหลัก
+
+  # ตั้งค่าเริ่มต้นให้ระบบ (เช่น เปิดใช้งาน Wayland, ตั้งธีม)
+  - type: default-settings
+    desktop: kde       # สลับเป็น KDE Plasma 6 ที่รองรับ HDR/VRR ได้ดีที่สุด
