@@ -4,10 +4,9 @@ on:
   push:
     branches:
       - main
-      - master # ใส่เผื่อไว้สำหรับเคสที่ระบบใช้ชื่อกิ่งเดิมครับ
-  workflow_dispatch: # เปิดให้สามารถกดสั่ง Build มือเองได้จากหน้าเว็บ GitHub
+      - master
+  workflow_dispatch:
 
-# บังคับให้ GitHub Runner ใช้ Node.js 24 ทั้ง Workflow เพื่อลบ Warning กวนใจ
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: 'true'
 
@@ -24,21 +23,23 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
-      # สเตปเรียกใช้ BlueBuild พร้อมส่งสิทธิ์ Token เข้าไปล็อกอินใน Container โดยตรง
+      # 🚀 สั่งเครื่องมือให้ Build ตัวระบบปฏิบัติการภายในเครื่อง Runner เลย (ไม่ยุ่งกับระบบ Registry ด้านนอก)
       - name: Build ISO using BlueBuild
         uses: blue-build/github-action@v1.1
         with:
           recipe: 'recipes/recipe.yml'
-          registry: ghcr.io
-          registry_namespace: ${{ github.repository_owner }}
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+          # ปิดการส่งอิมเมจขึ้นอินเทอร์เน็ต เพื่อตัดปัญหาเรื่องสิทธิ์ Username/Password ทั้งหมด
+          push: false 
 
-      # นำไฟล์ ISO ที่ประกอบเสร็จแล้วไปปล่อยในหน้า GitHub Releases
+      # 📦 เมื่อด่านบนผ่านเสร็จ จะได้ไฟล์ในโฟลเดอร์ build/ นำมาอัปโหลดขึ้น GitHub Releases ให้เราโหลดได้ทันที
       - name: Upload ISO to GitHub Releases
         uses: softprops/action-gh-release@v2
         if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
         with:
+          tag_name: v0.1.0-alpha
+          name: Imu-os Alpha 0.1.0
+          draft: false
+          prerelease: true
           files: |
             build/*.iso
             build/*.iso.sha256
