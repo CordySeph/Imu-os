@@ -23,15 +23,24 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
-      # 🚀 สั่งเครื่องมือให้ Build ตัวระบบปฏิบัติการภายในเครื่อง Runner เลย (ไม่ยุ่งกับระบบ Registry ด้านนอก)
+      # ✨ ขั้นตอนไม้ตาย: บังคับล็อกอินผ่านท่อ Stdin ทั้ง Docker และ Podman/Buildah ในระดับเครื่อง Runner
+      - name: Hard-login to GitHub Container Registry
+        run: |
+          echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+          echo "${{ secrets.GITHUB_TOKEN }}" | podman login ghcr.io -u ${{ github.actor }} --password-stdin
+
+      # เมื่อเครื่อง Runner ตัวนอกล็อกอินผ่าน สิทธิ์จะถูกแชร์เข้าไปในคอนเทนเนอร์ของ BlueBuild โดยอัตโนมัติ
       - name: Build ISO using BlueBuild
         uses: blue-build/github-action@v1.1
         with:
           recipe: 'recipes/recipe.yml'
-          # ปิดการส่งอิมเมจขึ้นอินเทอร์เน็ต เพื่อตัดปัญหาเรื่องสิทธิ์ Username/Password ทั้งหมด
-          push: false 
+          registry: ghcr.io
+          registry_namespace: ${{ github.repository_owner }}
+          # ฝั่ง GitHub Actions ระบบจะเข้าใจสองคีย์นี้ทันทีเมื่อถูกส่งเข้าไปใน Action
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+          push: true
 
-      # 📦 เมื่อด่านบนผ่านเสร็จ จะได้ไฟล์ในโฟลเดอร์ build/ นำมาอัปโหลดขึ้น GitHub Releases ให้เราโหลดได้ทันที
       - name: Upload ISO to GitHub Releases
         uses: softprops/action-gh-release@v2
         if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
